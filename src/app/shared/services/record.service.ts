@@ -1,10 +1,11 @@
 import { Injectable } from '@angular/core';
-import { Http, Headers } from '@angular/http';
+import { Http, Headers, RequestOptions } from '@angular/http';
 import { Observable } from 'rxjs/Observable';
 import { ToastrService } from 'ngx-toastr';
 
 @Injectable()
 export class RecordService {
+  record: object;
   record_url: string;
   constructor(private http: Http, private toaster: ToastrService) {}
 
@@ -15,15 +16,15 @@ export class RecordService {
     return `${urlParts[0]}api/${separator}${urlParts[1]}`;
   }
 
-  public save(record) {
+  public save(new_record) {
     const token = document.getElementsByName('authorized_token');
-    const options = {
-      headers: new Headers({
-        Authorization: 'Bearer ' + token[0]['value'],
-        'Content-Type': 'application/json',
-      }),
-    };
-    this.http.put(this.record_url, record, options).subscribe(
+    const headers = new Headers({
+      Authorization: 'Bearer ' + token[0]['value'],
+      'Content-Type': 'application/json-patch+json',
+    });
+    const options: RequestOptions = new RequestOptions({ headers: headers });
+    const body = { op: 'replace', path: '/description', value: 'New desc' };
+    this.http.patch(this.record_url, body, options).subscribe(
       res => {
         console.log(res);
         this.toaster.success('Record saved successfully!');
@@ -41,6 +42,7 @@ export class RecordService {
       .get(url)
       .map((recordRes: any) => recordRes.json())
       .flatMap((record: any) => {
+        this.record = record;
         return this.http
           .get(this.convertToApi(record.metadata.$schema))
           .map((schemaRes: any) => ({
@@ -52,3 +54,4 @@ export class RecordService {
       });
   }
 }
+
