@@ -25,7 +25,7 @@ export class EditorComponent implements OnInit {
 
   ngOnInit() {
     this.route.data.subscribe(data => {
-      this.record = data.editorData.record;
+      this.record = data.editorData.record.metadata;
       this.schema = data.editorData.schema;
       // this.patches = data.editorData.patches;
       // this.problemMap = data.editorData.problemMap;

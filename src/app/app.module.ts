@@ -10,6 +10,7 @@ import { SHARED_SERVICES } from './shared/services';
 import { AppRouter } from './app.router';
 import { SharedModule } from './shared';
 import { EditorModule } from './editor/editor.module';
+import { NotFoundModule } from './notfound/notfound.module';
 
 import { AppComponent } from './app.component';
 
@@ -23,6 +24,7 @@ import { AppComponent } from './app.component';
     AppRouter,
     SharedModule,
     EditorModule,
+    NotFoundModule,
     ToastrModule.forRoot({ positionClass: 'toast-top-center' }),
   ],
   providers: SHARED_SERVICES,

@@ -2,18 +2,25 @@ import { Injectable } from '@angular/core';
 import { Http, Headers, RequestOptions } from '@angular/http';
 import { Observable } from 'rxjs/Observable';
 import { ToastrService } from 'ngx-toastr';
+import { Record, PatchRequest } from '../interfaces';
 
 @Injectable()
 export class RecordService {
-  record: object;
+  record: Record;
   record_url: string;
   constructor(private http: Http, private toaster: ToastrService) {}
 
-  /** Switching schema url to api  */
-  private convertToApi(url: string): string {
-    const separator = 'schemas/';
-    const urlParts = url.split(separator);
-    return `${urlParts[0]}api/${separator}${urlParts[1]}`;
+  private createPatch(new_record): Array<PatchRequest> {
+    const operations = [];
+    const meta = this.record.metadata;
+    for (const prop of Object.keys(new_record)) {
+      if (prop in meta && new_record[prop] !== meta[prop]) {
+        operations.push({ op: 'replace', path: `/${prop}`, value: new_record[prop] });
+      } else {
+        operations.push({ op: 'add', path: `/${prop}`, value: new_record[prop] });
+      }
+    }
+    return operations;
   }
 
   public save(new_record) {
@@ -23,7 +30,7 @@ export class RecordService {
       'Content-Type': 'application/json-patch+json',
     });
     const options: RequestOptions = new RequestOptions({ headers: headers });
-    const body = { op: 'replace', path: '/description', value: 'New desc' };
+    const body = this.createPatch(new_record);
     this.http.patch(this.record_url, body, options).subscribe(
       res => {
         console.log(res);
@@ -38,20 +45,21 @@ export class RecordService {
 
   public fetchData(url: string): Observable<any> {
     this.record_url = url;
+    const headers = new Headers({
+      'Content-Type': 'application/json+refs',
+    });
+    const options: RequestOptions = new RequestOptions({ headers: headers });
     return this.http
-      .get(url)
+      .get(url, options)
       .map((recordRes: any) => recordRes.json())
       .flatMap((record: any) => {
         this.record = record;
-        return this.http
-          .get(this.convertToApi(record.metadata.$schema))
-          .map((schemaRes: any) => ({
-            record: record.metadata,
-            schema: schemaRes.json(),
-            problemMap: [],
-            patches: {},
-          }));
+        return this.http.get(record.metadata.$schema).map((schemaRes: any) => ({
+          record: record,
+          schema: schemaRes.json(),
+          problemMap: [],
+          patches: {},
+        }));
       });
   }
 }
-
