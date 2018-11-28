@@ -18,6 +18,7 @@
 </ng-template>
 
 <app-record-toolbar (broadcast)="saveRecord($event)"></app-record-toolbar>
+
 <!--
   [(jsonPatches)]="editorData.patches"
   [problemMap]="editorData.problemMap"
@@ -26,7 +27,7 @@
 <json-editor
   *ngIf="record && schema"
   [config]="config"
-  [(record)]="record"
+  [(record)]="record.metadata"
   [schema]="schema"
   [templates]="{
     referenceTemplate: referenceTemplate,

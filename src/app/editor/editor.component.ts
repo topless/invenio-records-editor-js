@@ -1,5 +1,7 @@
 import { Component, ViewEncapsulation, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { cloneDeep } from 'lodash';
+
 import 'rxjs/add/observable/zip';
 
 import { RecordService } from '../shared/services/record.service';
@@ -25,7 +27,7 @@ export class EditorComponent implements OnInit {
 
   ngOnInit() {
     this.route.data.subscribe(data => {
-      this.record = data.editorData.record.metadata;
+      this.record = cloneDeep(data.editorData.record);
       this.schema = data.editorData.schema;
       // this.patches = data.editorData.patches;
       // this.problemMap = data.editorData.problemMap;

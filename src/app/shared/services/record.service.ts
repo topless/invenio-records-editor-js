@@ -3,6 +3,7 @@ import { Http, Headers, RequestOptions } from '@angular/http';
 import { Observable } from 'rxjs/Observable';
 import { ToastrService } from 'ngx-toastr';
 import { Record, PatchRequest } from '../interfaces';
+import { isEqual } from 'lodash';
 
 @Injectable()
 export class RecordService {
@@ -12,12 +13,16 @@ export class RecordService {
 
   private createPatch(new_record): Array<PatchRequest> {
     const operations = [];
-    const meta = this.record.metadata;
-    for (const prop of Object.keys(new_record)) {
-      if (prop in meta && new_record[prop] !== meta[prop]) {
-        operations.push({ op: 'replace', path: `/${prop}`, value: new_record[prop] });
-      } else {
-        operations.push({ op: 'add', path: `/${prop}`, value: new_record[prop] });
+    const new_meta = new_record.metadata;
+    const old_meta = this.record.metadata;
+    for (const prop of Object.keys(new_meta)) {
+      if (!old_meta.hasOwnProperty(prop)) {
+        operations.push({ op: 'add', path: `/${prop}`, value: new_meta[prop] });
+        continue;
+      }
+      if (!isEqual(old_meta[prop], new_meta[prop])) {
+        operations.push({ op: 'replace', path: `/${prop}`, value: new_meta[prop] });
+        continue;
       }
     }
     return operations;
@@ -33,7 +38,7 @@ export class RecordService {
     const body = this.createPatch(new_record);
     this.http.patch(this.record_url, body, options).subscribe(
       res => {
-        console.log(res);
+        this.record = <Record>res.json();
         this.toaster.success('Record saved successfully!');
       },
       err => {
@@ -46,7 +51,7 @@ export class RecordService {
   public fetchData(url: string): Observable<any> {
     this.record_url = url;
     const headers = new Headers({
-      'Content-Type': 'application/json+refs',
+      Accept: 'application/vnd.ils.refs+json',
     });
     const options: RequestOptions = new RequestOptions({ headers: headers });
     return this.http
